@@ -1,0 +1,55 @@
+body, html {
+  margin: 0; padding: 0; overflow: hidden; background: #111;
+  font-family: Arial, sans-serif;
+}
+
+#game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: #222;
+  overflow: hidden;
+}
+
+.ball {
+  position: absolute;
+  border-radius: 50%;
+  background-color: #555;
+  border: 1px solid #333;
+  text-align: center;
+  line-height: 1;
+  color: white;
+  font-weight: bold;
+  user-select: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.ball.selected {
+  border-color: yellow;
+  box-shadow: 0 0 10px yellow;
+}
+
+.energy-bar {
+  position: absolute;
+  height: 6px;
+  background-color: #333;
+  border-radius: 3px;
+  overflow: hidden;
+  user-select: none;
+}
+
+.energy-fill {
+  height: 100%;
+  width: 0;
+  background-color: green;
+  transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+.food {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid #bb6600;
+  box-sizing: border-box;
+  cursor: default;
+}
