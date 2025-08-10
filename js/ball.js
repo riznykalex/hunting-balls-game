@@ -20,7 +20,7 @@ export class Ball {
 	this.div = document.createElement('div');
 	this.div.classList.add('ball');
 	this.gameContainer.appendChild(this.div);   // спочатку додати у DOM
-	this.updatePosition();                        // потім оновити позицію/стиль
+
 
 
     this.energyBar = document.createElement('div');
@@ -30,7 +30,8 @@ export class Ball {
     this.energyFill = document.createElement('div');
     this.energyFill.classList.add('energy-fill');
     this.energyBar.appendChild(this.energyFill);
-
+	
+	this.updatePosition();                        // потім оновити позицію/стиль
     this.updateEnergyBar();
   }
 
