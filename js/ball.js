@@ -17,10 +17,11 @@ export class Ball {
     this.height = height;
     this.gameContainer = gameContainer;
 
-    this.div = document.createElement('div');
-    this.div.classList.add('ball');
-    this.updatePosition();
-    this.gameContainer.appendChild(this.div);
+	this.div = document.createElement('div');
+	this.div.classList.add('ball');
+	this.gameContainer.appendChild(this.div);   // спочатку додати у DOM
+	this.updatePosition();                        // потім оновити позицію/стиль
+
 
     this.energyBar = document.createElement('div');
     this.energyBar.classList.add('energy-bar');
