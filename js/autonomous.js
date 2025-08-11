@@ -19,7 +19,7 @@ export function autonomousActions(balls, foods) {
       b.update();
       // Втрата енергії при русі
       let distMoved = Math.hypot(b.vx, b.vy);
-      b.power -= distMoved * 0.007;
+      b.power -= distMoved * 0.002;
       if (b.power < 0) b.power = 0;
     } else {
       // Інакше кулька може почати рух, випадковий рух
