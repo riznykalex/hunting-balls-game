@@ -2,6 +2,7 @@ import { VERSION } from './version.js';
 import { Ball } from './ball.js';
 import { Group } from './group.js';
 import { Food } from './food.js';
+import { autonomousActions } from './autonomous.js';
 
 window.addEventListener('load', () => {
   console.log(`🎮 Hunting Balls Game — версія ${VERSION}`);
@@ -71,95 +72,6 @@ function clusterizeBalls() {
       for (let m of clusterMembers) {
         m.group = group;
       }
-    }
-  }
-}
-
-function autonomousActions() {
-  for (let b of balls) {
-    if (!b.group) {
-      if (b.power >= 1) {
-        if (!b.isMoving) {
-          b.isMoving = true;
-          b.vx = (Math.random() - 0.5) * b.speed;
-          b.vy = (Math.random() - 0.5) * b.speed;
-        }
-      } else {
-        b.isMoving = false;
-        b.vx = 0;
-        b.vy = 0;
-      }
-    }
-  }
-
-  for (let g of groups) {
-    g.update(balls, foods);
-  }
-
-  for (let b of balls) {
-    if (!b.group) {
-      if (b.power < 1) {
-        // Лікування коли кулька сама (енергію нарощує у update)
-        b.isMoving = false;
-        b.vx = 0;
-        b.vy = 0;
-        b.update();
-        continue;
-      }
-
-      let closestFood = null;
-      let minFoodDist = Infinity;
-      for (let food of foods) {
-        let dist = Math.hypot(food.x - b.x, food.y - b.y);
-        if (dist < 200 && dist < minFoodDist) {
-          minFoodDist = dist;
-          closestFood = food;
-        }
-      }
-
-      if (closestFood) {
-        b.prey = null;
-        b.targetFood = closestFood;
-        b.isMoving = true;
-        let dx = closestFood.x - b.x;
-        let dy = closestFood.y - b.y;
-        let dist = Math.hypot(dx, dy);
-        b.vx = (dx / dist) * b.speed;
-        b.vy = (dy / dist) * b.speed;
-      } else {
-        b.targetFood = null;
-        let preyCandidate = null;
-        let minDist = Infinity;
-        for (let other of balls) {
-          if (other === b) continue;
-          if (other.power < b.power) {
-            let dist = Math.hypot(other.x - b.x, other.y - b.y);
-            if (dist < minDist && dist < 400) {
-              minDist = dist;
-              preyCandidate = other;
-            }
-          }
-        }
-        if (preyCandidate) {
-          b.prey = preyCandidate;
-          let angle = Math.random() * 2 * Math.PI;
-          let radius = 50 + Math.random() * 30;
-          let targetX = preyCandidate.x + radius * Math.cos(angle);
-          let targetY = preyCandidate.y + radius * Math.sin(angle);
-          let dx = targetX - b.x;
-          let dy = targetY - b.y;
-          let dist = Math.hypot(dx, dy);
-          b.vx = (dx / dist) * b.speed;
-          b.vy = (dy / dist) * b.speed;
-          b.isMoving = true;
-        } else {
-          b.isMoving = false;
-          b.vx = 0;
-          b.vy = 0;
-          b.prey = null;
-        }
-      }
-      b.update();  // Завжди оновлюємо кульку, щоб обробити рух і енергію
     }
   }
 }
@@ -247,7 +159,7 @@ function ballsEatFood() {
 
 function update() {
   clusterizeBalls();
-  autonomousActions();
+  autonomousActions(balls, groups, foods);
   groupsEatFood();
   groupsHunt();
   ballsEatFood();
