@@ -16,14 +16,13 @@ export class Controller {
   init() {
     this.gameContainer.addEventListener('click', (e) => this.handleClick(e));
 
-    // Створюємо svg для лінії вектора
     this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     this.svg.style.position = 'absolute';
     this.svg.style.top = '0';
     this.svg.style.left = '0';
     this.svg.style.width = '100%';
     this.svg.style.height = '100%';
-    this.svg.style.pointerEvents = 'none';  // Щоб не блокувати кліки
+    this.svg.style.pointerEvents = 'none';
     this.gameContainer.appendChild(this.svg);
 
     this.vectorLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -38,7 +37,7 @@ export class Controller {
     const cy = e.clientY;
 
     if (!this.selectedBall) {
-      // Вибираємо кульку по кліку
+      // Вибір кульки
       for (let b of this.balls) {
         let bx = b.x + b.size / 2;
         let by = b.y + b.size / 2;
@@ -49,23 +48,18 @@ export class Controller {
         }
       }
     } else if (!this.isSettingVector) {
-      // Задаємо вектор руху
+      // Починаємо задавати вектор
       this.isSettingVector = true;
       this.vectorStart = { x: this.selectedBall.x + this.selectedBall.size / 2, y: this.selectedBall.y + this.selectedBall.size / 2 };
       this.vectorEnd = { x: cx, y: cy };
       this.updateVectorLine();
 
-      // Встановлюємо timeout на 20 секунд
       if (this.vectorTimeout) clearTimeout(this.vectorTimeout);
-      this.vectorTimeout = setTimeout(() => {
-        this.clearSelection();
-      }, 20000);
+      this.vectorTimeout = setTimeout(() => this.clearSelection(), 20000);
 
-      // Слухач руху миші для оновлення лінії
       this.mouseMoveHandler = (ev) => this.handleMouseMove(ev);
       this.gameContainer.addEventListener('mousemove', this.mouseMoveHandler);
 
-      // Слухач другого кліку для підтвердження вектору
       this.gameContainer.addEventListener('click', this.confirmVectorHandler = (ev) => this.confirmVector(ev), { once: true });
     }
   }
@@ -87,17 +81,27 @@ export class Controller {
 
   updateVectorLine() {
     if (!this.vectorLine || !this.vectorStart || !this.vectorEnd) return;
-    this.vectorLine.setAttribute('x1', this.vectorStart.x);
-    this.vectorLine.setAttribute('y1', this.vectorStart.y);
-    this.vectorLine.setAttribute('x2', this.vectorEnd.x);
-    this.vectorLine.setAttribute('y2', this.vectorEnd.y);
 
-    // Обчислимо довжину вектора
     let dx = this.vectorEnd.x - this.vectorStart.x;
     let dy = this.vectorEnd.y - this.vectorStart.y;
     let dist = Math.hypot(dx, dy);
 
-    // Вартість руху приблизно dist * коефіцієнт (0.007)
+    const maxLength = 60;  // обмежуємо довжину вектора візуально
+
+    let finalDx = dx;
+    let finalDy = dy;
+
+    if (dist > maxLength) {
+      finalDx = (dx / dist) * maxLength;
+      finalDy = (dy / dist) * maxLength;
+      dist = maxLength;
+    }
+
+    this.vectorLine.setAttribute('x1', this.vectorStart.x);
+    this.vectorLine.setAttribute('y1', this.vectorStart.y);
+    this.vectorLine.setAttribute('x2', this.vectorStart.x + finalDx);
+    this.vectorLine.setAttribute('y2', this.vectorStart.y + finalDy);
+
     let energyCost = dist * 0.007;
     if (this.selectedBall.power >= energyCost) {
       this.vectorLine.setAttribute('stroke', 'blue');
@@ -109,7 +113,6 @@ export class Controller {
   }
 
   confirmVector(e) {
-    // Задаємо вектор швидкості кульці
     if (!this.selectedBall || !this.vectorStart || !this.vectorEnd) {
       this.clearSelection();
       return;
@@ -120,17 +123,18 @@ export class Controller {
     let dist = Math.hypot(dx, dy);
 
     if (dist < 5) {
-      // Якщо вектор дуже малий — не задаємо рух
       this.clearSelection();
       return;
     }
 
-    let speedFactor = this.selectedBall.speed / dist;
-    this.selectedBall.vx = dx * speedFactor;
-    this.selectedBall.vy = dy * speedFactor;
+    // Нормалізуємо і множимо на швидкість кульки
+    let vx = (dx / dist) * this.selectedBall.speed;
+    let vy = (dy / dist) * this.selectedBall.speed;
+
+    this.selectedBall.vx = vx;
+    this.selectedBall.vy = vy;
     this.selectedBall.isMoving = true;
 
-    // Скидаємо timeout і слухачі
     if (this.vectorTimeout) clearTimeout(this.vectorTimeout);
     this.clearSelection();
   }
@@ -155,21 +159,15 @@ export class Controller {
   }
 
   hideVectorLine() {
-    if (this.vectorLine) {
-      this.vectorLine.style.display = 'none';
-    }
+    if (this.vectorLine) this.vectorLine.style.display = 'none';
   }
 
   showVectorLine() {
-    if (this.vectorLine) {
-      this.vectorLine.style.display = 'block';
-    }
+    if (this.vectorLine) this.vectorLine.style.display = 'block';
   }
 
   update() {
-    // Якщо кулька під контролем, рухаємо її вказаним вектором і знімаємо контроль, коли енергії не вистачає
     if (this.selectedBall && this.selectedBall.isControlled) {
-      // Якщо кулька рухається, споживаємо енергію
       if (this.selectedBall.isMoving) {
         let distMoved = Math.hypot(this.selectedBall.vx, this.selectedBall.vy);
         this.selectedBall.power -= distMoved * 0.007;
