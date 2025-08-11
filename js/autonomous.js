@@ -14,11 +14,11 @@ export function autonomousActions(balls, groups, foods) {
         b.size = 30 + b.power * 10;
         b.updatePosition();
 
-        // Перейти до наступної кульки — не робимо інших дій поки не відновиться
+        // Не робимо інші дії, поки не відновиться
         continue;
       }
 
-      // Якщо енергія 2 або більше і кулька не рухається — запускаємо рух
+      // Якщо енергія >=2 і кулька не рухається — запускаємо рух
       if (b.power >= 2 && !b.isMoving) {
         b.isMoving = true;
         b.vx = (Math.random() - 0.5) * b.speed;
@@ -28,7 +28,35 @@ export function autonomousActions(balls, groups, foods) {
   }
 
   // Оновлення груп
-  for (let g of groups) {
+  for (let i = groups.length - 1; i >= 0; i--) {
+    let g = groups[i];
+
+    // Якщо група не рухається — розпадаємо її
+    if (!g.isMoving) {
+      for (let m of g.members) {
+        m.group = null;
+        // Відновлення енергії у кожного члена групи (якщо треба)
+        if (m.power < 2) {
+          m.isMoving = false;
+          m.vx = 0;
+          m.vy = 0;
+          m.power += 0.005;
+          if (m.power > 2) m.power = 2;
+          m.size = 30 + m.power * 10;
+          m.updatePosition();
+        } else {
+          // Якщо енергія достатня — запускаємо рух індивідуального бенгла
+          if (!m.isMoving) {
+            m.isMoving = true;
+            m.vx = (Math.random() - 0.5) * m.speed;
+            m.vy = (Math.random() - 0.5) * m.speed;
+          }
+        }
+      }
+      groups.splice(i, 1);
+      continue; // Переходимо до наступної групи
+    }
+
     g.update(balls, foods);
   }
 
