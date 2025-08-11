@@ -1,3 +1,4 @@
+//food.js
 export class Food {
   constructor(id, x, y, energy, gameContainer) {
     this.id = id;

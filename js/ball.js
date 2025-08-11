@@ -1,3 +1,5 @@
+import { moveEntity } from './movement.js';
+
 export class Ball {
   constructor(id, x, y, power, gameContainer, width, height) {
     this.id = id;
@@ -11,17 +13,15 @@ export class Ball {
     this.vy = 0;
     this.prey = null;
     this.targetFood = null;
-    this.group = null; // посилання на групу, якщо в ній
+    this.group = null;
 
     this.width = width;
     this.height = height;
     this.gameContainer = gameContainer;
 
-	this.div = document.createElement('div');
-	this.div.classList.add('ball');
-	this.gameContainer.appendChild(this.div);   // спочатку додати у DOM
-
-
+    this.div = document.createElement('div');
+    this.div.classList.add('ball');
+    this.gameContainer.appendChild(this.div);
 
     this.energyBar = document.createElement('div');
     this.energyBar.classList.add('energy-bar');
@@ -30,8 +30,8 @@ export class Ball {
     this.energyFill = document.createElement('div');
     this.energyFill.classList.add('energy-fill');
     this.energyBar.appendChild(this.energyFill);
-	
-	this.updatePosition();                        // потім оновити позицію/стиль
+
+    this.updatePosition();
     this.updateEnergyBar();
   }
 
@@ -41,13 +41,13 @@ export class Ball {
     this.energyFill.style.width = (pct * 100) + '%';
 
     if (this.power <= 1) {
-      this.energyFill.style.backgroundColor = '#ff3333'; // червоний
+      this.energyFill.style.backgroundColor = '#ff3333';
     } else if (this.power <= 3) {
-      this.energyFill.style.backgroundColor = '#ffcc33'; // жовтий
+      this.energyFill.style.backgroundColor = '#ffcc33';
     } else if (this.power <= 5) {
-      this.energyFill.style.backgroundColor = '#33cc33'; // зелений
+      this.energyFill.style.backgroundColor = '#33cc33';
     } else {
-      this.energyFill.style.backgroundColor = '#3399ff'; // синій
+      this.energyFill.style.backgroundColor = '#3399ff';
     }
   }
 
@@ -65,12 +65,12 @@ export class Ball {
   }
 
   move(dx, dy) {
-    this.x += dx;
-    this.y += dy;
+    moveEntity(this, dx, dy, this.width, this.height);
+  }
 
-    this.x = Math.min(Math.max(0, this.x), this.width - this.size);
-    this.y = Math.min(Math.max(0, this.y), this.height - this.size);
-
-    this.updatePosition();
+  update() {
+    if (this.isMoving) {
+      this.move(this.vx, this.vy);
+    }
   }
 }

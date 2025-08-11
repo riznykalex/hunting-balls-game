@@ -1,7 +1,9 @@
+import { moveEntity } from './movement.js';
+
 export class Group {
   constructor(id, members) {
     this.id = id;
-    this.members = members; // масив Ball
+    this.members = members;
     this.vx = 0;
     this.vy = 0;
     this.speed = 1.2;
@@ -31,7 +33,7 @@ export class Group {
   }
 
   autonomousHunt(balls, foods) {
-    if (this.totalPower() < this.members.length) { // якщо середня сила менша 1, відпочиваємо
+    if (this.averagePower() < 1) {
       this.isMoving = false;
       this.vx = 0;
       this.vy = 0;
@@ -40,7 +42,6 @@ export class Group {
       return;
     }
 
-    // Шукаємо їжу поруч (радіус 200)
     let closestFood = null;
     let minFoodDist = Infinity;
     for (let food of foods) {
@@ -50,10 +51,12 @@ export class Group {
         closestFood = food;
       }
     }
+
     if (closestFood) {
       this.prey = null;
       this.targetFood = closestFood;
       this.isMoving = true;
+
       let dx = closestFood.x - this.centerX;
       let dy = closestFood.y - this.centerY;
       let dist = Math.hypot(dx, dy);
@@ -69,14 +72,11 @@ export class Group {
       this.targetFood = null;
     }
 
-    // Якщо їжі немає — шукаємо слабшого ворога (кульку або іншу групу)
     let preyCandidate = null;
     let minDist = Infinity;
-
-    // Перевірка індивідуальних кульок (не в групах)
     for (let b of balls) {
-      if (this.members.includes(b)) continue; // не полюємо на себе
-      if (b.group) continue; // пропускаємо кульки в інших групах (щоб полювати на групи, треба інша логіка)
+      if (this.members.includes(b)) continue;
+      if (b.group) continue;
       if (b.power < this.averagePower()) {
         let dist = Math.hypot(b.x - this.centerX, b.y - this.centerY);
         if (dist < minDist && dist < 400) {
@@ -88,32 +88,26 @@ export class Group {
 
     if (preyCandidate) {
       this.prey = preyCandidate;
+
+      let dx = preyCandidate.x - this.centerX;
+      let dy = preyCandidate.y - this.centerY;
+      let dist = Math.hypot(dx, dy);
+
+      let energyNeeded = dist * 0.005;
+      if (this.totalPower() >= energyNeeded) {
+        this.vx = (dx / dist) * this.speed;
+        this.vy = (dy / dist) * this.speed;
+        this.isMoving = true;
+      } else {
+        this.isMoving = false;
+        this.vx = 0;
+        this.vy = 0;
+      }
     } else {
-      // Рух випадковий для активності
       this.isMoving = false;
       this.vx = 0;
       this.vy = 0;
       this.prey = null;
-      return;
-    }
-
-    // Цільові координати для руху
-    let targetX = this.prey.x;
-    let targetY = this.prey.y;
-
-    let dx = targetX - this.centerX;
-    let dy = targetY - this.centerY;
-    let dist = Math.hypot(dx, dy);
-
-    let energyNeeded = dist * 0.005;
-    if (this.totalPower() >= energyNeeded) {
-      this.vx = (dx / dist) * this.speed;
-      this.vy = (dy / dist) * this.speed;
-      this.isMoving = true;
-    } else {
-      this.isMoving = false;
-      this.vx = 0;
-      this.vy = 0;
     }
   }
 
@@ -121,32 +115,34 @@ export class Group {
     if (!this.isMoving) return;
     this.updateCenter();
 
+    const lerp = (start, end, t) => start + (end - start) * t;
+
     for (let i = 0; i < this.members.length; i++) {
       let m = this.members[i];
-      // Зсув по колу для візуалізації "липкості"
+
       let angle = (2 * Math.PI / this.members.length) * i;
       let offsetRadius = 20;
       let targetX = this.centerX + offsetRadius * Math.cos(angle) - m.size / 2;
       let targetY = this.centerY + offsetRadius * Math.sin(angle) - m.size / 2;
 
-      // Вектор руху для даного учасника
-      let dx = this.vx;
-      let dy = this.vy;
+      moveEntity(m, this.vx, this.vy, m.width, m.height);
 
-      // Оновлюємо позицію кульки
-      m.move(dx, dy);
-      // Примусово ставимо близько до цілі (щоб не розбігались)
-      if (Math.abs(m.x - targetX) > 4) m.x = targetX;
-      if (Math.abs(m.y - targetY) > 4) m.y = targetY;
+      m.x = lerp(m.x, targetX, 0.1);
+      m.y = lerp(m.y, targetY, 0.1);
 
-      // Втрата енергії пропорційна руху
-      let distMoved = Math.hypot(dx, dy);
+      let distMoved = Math.hypot(this.vx, this.vy);
       m.power -= distMoved * 0.007;
       if (m.power < 0) m.power = 0;
 
       m.size = 30 + m.power * 10;
       m.updatePosition();
     }
+
     this.updateCenter();
+  }
+
+  update(balls, foods) {
+    this.autonomousHunt(balls, foods);
+    this.move();
   }
 }

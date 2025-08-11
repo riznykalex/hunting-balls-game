@@ -74,19 +74,21 @@ function autonomousActions() {
   for (let b of balls) {
     if (!b.group) {
       if (b.power >= 1) {
-        b.isMoving = true;
-        b.vx = (Math.random() - 0.5) * b.speed;
-        b.vy = (Math.random() - 0.5) * b.speed;
-        b.move(b.vx, b.vy);
+        if (!b.isMoving) {
+          b.isMoving = true;
+          b.vx = (Math.random() - 0.5) * b.speed;
+          b.vy = (Math.random() - 0.5) * b.speed;
+        }
       } else {
         b.isMoving = false;
+        b.vx = 0;
+        b.vy = 0;
       }
     }
   }
 
   for (let g of groups) {
-    g.autonomousHunt(balls, foods);
-    g.move();
+    g.update(balls, foods);
   }
 
   for (let b of balls) {
@@ -151,7 +153,7 @@ function autonomousActions() {
           b.prey = null;
         }
       }
-      b.move(b.vx, b.vy);
+      b.update();  // Викликаємо update, а не move, щоб враховувати isMoving
     }
   }
 }
