@@ -14,11 +14,11 @@ export function autonomousActions(balls, groups, foods) {
         b.size = 30 + b.power * 10;
         b.updatePosition();
 
-        continue;
+        continue; // не рухаємось, не полюємо
       }
 
-      // Якщо енергія >= 1 і кулька не рухається — запускаємо рух
-      if (b.power >= 1 && !b.isMoving) {
+      // Якщо енергія >= 2 і кулька не рухається — запускаємо рух
+      if (b.power >= 2 && !b.isMoving) {
         b.isMoving = true;
         b.vx = (Math.random() - 0.5) * b.speed;
         b.vy = (Math.random() - 0.5) * b.speed;
@@ -26,14 +26,29 @@ export function autonomousActions(balls, groups, foods) {
     }
   }
 
-  // Оновлення груп
+  // Оновлення груп з логікою розділення, якщо стоять
   for (let g of groups) {
     g.update(balls, foods);
+
+    // Якщо група стоїть більше часу, розділяємо її
+    if (!g.isMoving) {
+      if (!g.standCounter) g.standCounter = 0;
+      g.standCounter++;
+      if (g.standCounter > 120) { // приблизно 2 секунди при 60fps
+        // Розділення групи на індивідуальні кульки
+        for (let m of g.members) {
+          m.group = null;
+        }
+        groups.splice(groups.indexOf(g), 1);
+      }
+    } else {
+      g.standCounter = 0; // скидаємо лічильник якщо група рухається
+    }
   }
 
   // Індивідуальні кульки, що не в групі, полювання і пошук їжі
   for (let b of balls) {
-    if (!b.group && b.power >= 1) {
+    if (!b.group && b.power >= 2) {
       let closestFood = null;
       let minFoodDist = Infinity;
       for (let food of foods) {
