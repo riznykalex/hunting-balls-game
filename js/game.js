@@ -2,6 +2,7 @@ import { VERSION } from './version.js';
 import { Ball } from './ball.js';
 import { Food } from './food.js';
 import { autonomousActions } from './autonomous.js';
+import { Controller } from './control.js';
 
 window.addEventListener('load', () => {
   console.log(`🎮 Hunting Balls Game — версія ${VERSION}`);
@@ -37,6 +38,8 @@ function createFoodRandom() {
 
 function ballsEatFood() {
   for (let b of balls) {
+    if (b.isControlled) continue;  // кулька під контролем не їсть автоматично
+
     if (b.isMoving && b.targetFood) {
       let dist = Math.hypot(b.targetFood.x - b.x, b.targetFood.y - b.y);
       if (dist < 20) {
@@ -56,51 +59,10 @@ function ballsEatFood() {
   }
 }
 
-function handleFights() {
-  // Логіка боїв між кульками - виконуємо тут
-  for (let attacker of balls) {
-    if (!attacker.isMoving || attacker.power < 1) continue;
-
-    for (let target of balls) {
-      if (attacker === target) continue;
-      if (target.power >= attacker.power) continue;
-
-      let dist = Math.hypot(target.x - attacker.x, target.y - attacker.y);
-      if (dist < 40) {
-        // Поєдинок
-        let damage = target.power;
-        attacker.power -= damage;
-        if (attacker.power < 0) attacker.power = 0;
-
-        // Переможець отримує енергію переможеного через 1 секунду
-        setTimeout(() => {
-          if (balls.includes(attacker)) {
-            attacker.power += damage;
-            if (attacker.power > 6) attacker.power = 6;
-            attacker.size = 30 + attacker.power * 10;
-            attacker.updatePosition();
-          }
-        }, 1000);
-
-        // Вбиваємо ціль, якщо енергія <= 0
-        target.power -= damage;
-        if (target.power <= 0) {
-          balls.splice(balls.indexOf(target), 1);
-          target.div.remove();
-          target.energyBar.remove();
-        } else {
-          target.size = 30 + target.power * 10;
-          target.updatePosition();
-        }
-      }
-    }
-  }
-}
-
 function update() {
+  controller.update();
   autonomousActions(balls, foods);
   ballsEatFood();
-  handleFights();
 }
 
 function gameLoop() {
@@ -114,7 +76,7 @@ for (let i = 0; i < 15; i++) {
   createBallRandom();
 }
 
-for (let i = 0; i < 50; i++) {
+for (let i = 0; i < 40; i++) {  // більше їжі
   createFoodRandom();
 }
 
@@ -125,26 +87,11 @@ setInterval(() => {
 }, 4000);
 
 setInterval(() => {
-  if (foods.length < 60) {
+  if (foods.length < 60) {  // більше їжі
     createFoodRandom();
   }
 }, 3000);
 
-gameLoop();
+const controller = new Controller(balls, game);
 
-let selectedBall = null;
-game.addEventListener('click', (e) => {
-  let cx = e.clientX;
-  let cy = e.clientY;
-  for (let b of balls) {
-    let bx = b.x + b.size / 2;
-    let by = b.y + b.size / 2;
-    let dist = Math.hypot(cx - bx, cy - by);
-    if (dist < b.size / 2) {
-      if (selectedBall) selectedBall.div.classList.remove('selected');
-      selectedBall = b;
-      selectedBall.div.classList.add('selected');
-      break;
-    }
-  }
-});
+gameLoop();
