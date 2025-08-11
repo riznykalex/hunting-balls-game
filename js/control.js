@@ -2,11 +2,10 @@ export class Controller {
   constructor(balls, gameContainer) {
     this.balls = balls;
     this.gameContainer = gameContainer;
-
     this.selectedBall = null;
     this.vectorLine = null;
-    this.vectorEnd = null;
     this.vectorStart = null;
+    this.vectorEnd = null;
     this.isSettingVector = false;
     this.vectorTimeout = null;
 
@@ -37,7 +36,6 @@ export class Controller {
     const cy = e.clientY;
 
     if (!this.selectedBall) {
-      // Вибір кульки
       for (let b of this.balls) {
         let bx = b.x + b.size / 2;
         let by = b.y + b.size / 2;
@@ -48,14 +46,15 @@ export class Controller {
         }
       }
     } else if (!this.isSettingVector) {
-      // Починаємо задавати вектор
       this.isSettingVector = true;
       this.vectorStart = { x: this.selectedBall.x + this.selectedBall.size / 2, y: this.selectedBall.y + this.selectedBall.size / 2 };
       this.vectorEnd = { x: cx, y: cy };
       this.updateVectorLine();
 
       if (this.vectorTimeout) clearTimeout(this.vectorTimeout);
-      this.vectorTimeout = setTimeout(() => this.clearSelection(), 20000);
+      this.vectorTimeout = setTimeout(() => {
+        this.clearSelection();
+      }, 20000);
 
       this.mouseMoveHandler = (ev) => this.handleMouseMove(ev);
       this.gameContainer.addEventListener('mousemove', this.mouseMoveHandler);
@@ -81,26 +80,14 @@ export class Controller {
 
   updateVectorLine() {
     if (!this.vectorLine || !this.vectorStart || !this.vectorEnd) return;
+    this.vectorLine.setAttribute('x1', this.vectorStart.x);
+    this.vectorLine.setAttribute('y1', this.vectorStart.y);
+    this.vectorLine.setAttribute('x2', this.vectorEnd.x);
+    this.vectorLine.setAttribute('y2', this.vectorEnd.y);
 
     let dx = this.vectorEnd.x - this.vectorStart.x;
     let dy = this.vectorEnd.y - this.vectorStart.y;
     let dist = Math.hypot(dx, dy);
-
-    const maxLength = 60;  // обмежуємо довжину вектора візуально
-
-    let finalDx = dx;
-    let finalDy = dy;
-
-    if (dist > maxLength) {
-      finalDx = (dx / dist) * maxLength;
-      finalDy = (dy / dist) * maxLength;
-      dist = maxLength;
-    }
-
-    this.vectorLine.setAttribute('x1', this.vectorStart.x);
-    this.vectorLine.setAttribute('y1', this.vectorStart.y);
-    this.vectorLine.setAttribute('x2', this.vectorStart.x + finalDx);
-    this.vectorLine.setAttribute('y2', this.vectorStart.y + finalDy);
 
     let energyCost = dist * 0.007;
     if (this.selectedBall.power >= energyCost) {
@@ -127,12 +114,9 @@ export class Controller {
       return;
     }
 
-    // Нормалізуємо і множимо на швидкість кульки
-    let vx = (dx / dist) * this.selectedBall.speed;
-    let vy = (dy / dist) * this.selectedBall.speed;
-
-    this.selectedBall.vx = vx;
-    this.selectedBall.vy = vy;
+    let speedFactor = this.selectedBall.speed / dist;
+    this.selectedBall.vx = dx * speedFactor;
+    this.selectedBall.vy = dy * speedFactor;
     this.selectedBall.isMoving = true;
 
     if (this.vectorTimeout) clearTimeout(this.vectorTimeout);
@@ -167,21 +151,19 @@ export class Controller {
   }
 
   update() {
-    if (this.selectedBall && this.selectedBall.isControlled) {
-      if (this.selectedBall.isMoving) {
-        let distMoved = Math.hypot(this.selectedBall.vx, this.selectedBall.vy);
-        this.selectedBall.power -= distMoved * 0.007;
-        if (this.selectedBall.power < 0) this.selectedBall.power = 0;
+    if (this.selectedBall && this.selectedBall.isControlled && this.selectedBall.isMoving) {
+      this.selectedBall.move(this.selectedBall.vx, this.selectedBall.vy);
 
-        this.selectedBall.size = 30 + this.selectedBall.power * 10;
-        this.selectedBall.updatePosition();
+      let distMoved = Math.hypot(this.selectedBall.vx, this.selectedBall.vy);
+      this.selectedBall.power -= distMoved * 0.007;
+      if (this.selectedBall.power < 0) this.selectedBall.power = 0;
 
-        if (this.selectedBall.power <= 0) {
-          this.selectedBall.isMoving = false;
-          this.clearSelection();
-        } else {
-          this.selectedBall.move(this.selectedBall.vx, this.selectedBall.vy);
-        }
+      this.selectedBall.size = 30 + this.selectedBall.power * 10;
+      this.selectedBall.updatePosition();
+
+      if (this.selectedBall.power <= 0) {
+        this.selectedBall.isMoving = false;
+        this.clearSelection();
       }
     }
   }

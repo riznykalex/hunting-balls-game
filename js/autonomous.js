@@ -1,99 +1,99 @@
 export function autonomousActions(balls, foods) {
-  const speedMultiplier = 2;
-
   for (let b of balls) {
+    if (b.isControlled) continue;
+
     if (b.isSleeping) {
       b.isMoving = false;
       b.vx = 0;
       b.vy = 0;
-
       b.power += 0.005;
       if (b.power >= 2) {
         b.power = 2;
         b.isSleeping = false;
       }
+      b.size = 30 + b.power * 10;
+      b.updatePosition();
+      continue;
     }
-    else if (b.power < 1) {
+
+    if (b.power < 1) {
       b.isSleeping = true;
       b.isMoving = false;
       b.vx = 0;
       b.vy = 0;
+      b.size = 30 + b.power * 10;
+      b.updatePosition();
+      continue;
     }
-    else {
-      // якщо кулька не рухаЇтьс€ Ч запускаЇмо випадковий рух
-      if (!b.isMoving) {
-        b.isMoving = true;
-        b.vx = (Math.random() - 0.5) * b.speed * speedMultiplier;
-        b.vy = (Math.random() - 0.5) * b.speed * speedMultiplier;
+
+    // ЎукаЇмо њжу
+    let closestFood = null;
+    let minFoodDist = Infinity;
+    for (let food of foods) {
+      let dist = Math.hypot(food.x - b.x, food.y - b.y);
+      if (dist < 200 && dist < minFoodDist) {
+        minFoodDist = dist;
+        closestFood = food;
       }
+    }
 
-      // --- ЎукаЇмо найближчу њжу ---
-      let closestFood = null;
-      let minFoodDist = Infinity;
-      for (let food of foods) {
-        let dist = Math.hypot(food.x - b.x, food.y - b.y);
-        if (dist < 200 && dist < minFoodDist) {
-          minFoodDist = dist;
-          closestFood = food;
-        }
-      }
-
-      if (closestFood) {
-        // якщо Ї њжа Ч йдемо до нењ ≥ не полюЇмо
-        b.targetFood = closestFood;
-        b.prey = null;
-
-        let dx = closestFood.x - b.x;
-        let dy = closestFood.y - b.y;
-        let dist = Math.hypot(dx, dy);
-        b.vx = (dx / dist) * b.speed * speedMultiplier;
-        b.vy = (dy / dist) * b.speed * speedMultiplier;
-        b.isMoving = true;
-      } else {
-        // якщо њж≥ нема Ч шукаЇмо жертву
-        b.targetFood = null;
-
-        let preyCandidate = null;
-        let minDist = Infinity;
-        for (let other of balls) {
-          if (other === b) continue;
-          if (other.power < b.power) {
-            let dist = Math.hypot(other.x - b.x, other.y - b.y);
-            if (dist < minDist && dist < 400) {
-              minDist = dist;
-              preyCandidate = other;
-            }
+    if (closestFood) {
+      let dx = closestFood.x - b.x;
+      let dy = closestFood.y - b.y;
+      let dist = Math.hypot(dx, dy);
+      b.vx = (dx / dist) * b.speed;
+      b.vy = (dy / dist) * b.speed;
+      b.isMoving = true;
+    } else {
+      // ЎукаЇмо жертву
+      let preyCandidate = null;
+      let minDist = Infinity;
+      for (let other of balls) {
+        if (other === b || other.isControlled) continue;
+        if (other.power < b.power) {
+          let dist = Math.hypot(other.x - b.x, other.y - b.y);
+          if (dist < minDist && dist < 400) {
+            minDist = dist;
+            preyCandidate = other;
           }
         }
-
-        if (preyCandidate) {
-          b.prey = preyCandidate;
-
-          let angle = Math.random() * 2 * Math.PI;
-          let radius = 50 + Math.random() * 30;
-          let targetX = preyCandidate.x + radius * Math.cos(angle);
-          let targetY = preyCandidate.y + radius * Math.sin(angle);
-          let dx = targetX - b.x;
-          let dy = targetY - b.y;
-          let dist = Math.hypot(dx, dy);
-          b.vx = (dx / dist) * b.speed * speedMultiplier;
-          b.vy = (dy / dist) * b.speed * speedMultiplier;
-          b.isMoving = true;
-        } else {
-          b.prey = null;
-        }
       }
 
-      // –ух кульки
-      b.move(b.vx, b.vy);
+      if (preyCandidate) {
+        let dx = preyCandidate.x - b.x;
+        let dy = preyCandidate.y - b.y;
+        let dist = Math.hypot(dx, dy);
+        b.vx = (dx / dist) * b.speed;
+        b.vy = (dy / dist) * b.speed;
+        b.isMoving = true;
 
-      // ¬трачаЇмо енерг≥ю пропорц≥йно руху
-      let distMoved = Math.hypot(b.vx, b.vy);
-      b.power -= distMoved * 0.002;
-      if (b.power < 0) b.power = 0;
+        if (dist < 20) {
+          const damage = 0.1;
+          preyCandidate.power -= damage;
+          b.power += damage;
+          if (preyCandidate.power <= 0) {
+            preyCandidate.div.remove();
+            balls.splice(balls.indexOf(preyCandidate), 1);
+          }
+        }
+      } else {
+        b.vx = 0;
+        b.vy = 0;
+        b.isMoving = false;
+      }
     }
 
-    b.size = 30 + b.power * 10;
-    b.updatePosition();
+    if (b.isMoving) {
+      b.move(b.vx, b.vy);
+      b.power -= Math.hypot(b.vx, b.vy) * 0.007;
+      if (b.power < 0) b.power = 0;
+      b.size = 30 + b.power * 10;
+      b.updatePosition();
+
+      if (b.power <= 0) {
+        b.isMoving = false;
+        b.isSleeping = true;
+      }
+    }
   }
 }

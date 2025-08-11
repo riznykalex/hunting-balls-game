@@ -36,48 +36,24 @@ function createFoodRandom() {
   return food;
 }
 
-function ballsEatFood() {
-  for (let b of balls) {
-    if (b.isControlled) continue;  // кулька під контролем не їсть автоматично
-
-    if (b.isMoving && b.targetFood) {
-      let dist = Math.hypot(b.targetFood.x - b.x, b.targetFood.y - b.y);
-      if (dist < 20) {
-        b.power += b.targetFood.energy;
-        if (b.power > 6) b.power = 6;
-        b.size = 30 + b.power * 10;
-        b.updatePosition();
-
-        b.targetFood.remove();
-        foods.splice(foods.indexOf(b.targetFood), 1);
-        b.targetFood = null;
-        b.isMoving = false;
-        b.vx = 0;
-        b.vy = 0;
-      }
-    }
-  }
+for (let i = 0; i < 15; i++) {
+  createBallRandom();
 }
 
+for (let i = 0; i < 40; i++) {
+  createFoodRandom();
+}
+
+const controller = new Controller(balls, game);
+
 function update() {
-  controller.update();
   autonomousActions(balls, foods);
-  ballsEatFood();
+  controller.update();
 }
 
 function gameLoop() {
   update();
   requestAnimationFrame(gameLoop);
-}
-
-// --- Ініціалізація ---
-
-for (let i = 0; i < 15; i++) {
-  createBallRandom();
-}
-
-for (let i = 0; i < 40; i++) {  // більше їжі
-  createFoodRandom();
 }
 
 setInterval(() => {
@@ -87,11 +63,9 @@ setInterval(() => {
 }, 4000);
 
 setInterval(() => {
-  if (foods.length < 60) {  // більше їжі
+  if (foods.length < 50) {
     createFoodRandom();
   }
 }, 3000);
-
-const controller = new Controller(balls, game);
 
 gameLoop();
