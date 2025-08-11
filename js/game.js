@@ -56,9 +56,51 @@ function ballsEatFood() {
   }
 }
 
+function handleFights() {
+  // Логіка боїв між кульками - виконуємо тут
+  for (let attacker of balls) {
+    if (!attacker.isMoving || attacker.power < 1) continue;
+
+    for (let target of balls) {
+      if (attacker === target) continue;
+      if (target.power >= attacker.power) continue;
+
+      let dist = Math.hypot(target.x - attacker.x, target.y - attacker.y);
+      if (dist < 40) {
+        // Поєдинок
+        let damage = target.power;
+        attacker.power -= damage;
+        if (attacker.power < 0) attacker.power = 0;
+
+        // Переможець отримує енергію переможеного через 1 секунду
+        setTimeout(() => {
+          if (balls.includes(attacker)) {
+            attacker.power += damage;
+            if (attacker.power > 6) attacker.power = 6;
+            attacker.size = 30 + attacker.power * 10;
+            attacker.updatePosition();
+          }
+        }, 1000);
+
+        // Вбиваємо ціль, якщо енергія <= 0
+        target.power -= damage;
+        if (target.power <= 0) {
+          balls.splice(balls.indexOf(target), 1);
+          target.div.remove();
+          target.energyBar.remove();
+        } else {
+          target.size = 30 + target.power * 10;
+          target.updatePosition();
+        }
+      }
+    }
+  }
+}
+
 function update() {
-  autonomousActions(balls, foods, width, height);
+  autonomousActions(balls, foods);
   ballsEatFood();
+  handleFights();
 }
 
 function gameLoop() {
