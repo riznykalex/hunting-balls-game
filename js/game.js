@@ -1,6 +1,5 @@
 import { VERSION } from './version.js';
 import { Ball } from './ball.js';
-import { Group } from './group.js';
 import { Food } from './food.js';
 import { autonomousActions } from './autonomous.js';
 
@@ -13,11 +12,9 @@ const width = window.innerWidth;
 const height = window.innerHeight;
 
 let balls = [];
-let groups = [];
 let foods = [];
 let nextBallId = 0;
 let nextFoodId = 0;
-let nextGroupId = 0;
 
 function createBallRandom() {
   let x = Math.random() * (width - 60);
@@ -38,106 +35,8 @@ function createFoodRandom() {
   return food;
 }
 
-function clusterizeBalls() {
-  groups = [];
-  // Очищаємо посилання в кульках
-  for (let b of balls) {
-    b.group = null;
-  }
-
-  let used = new Set();
-
-  for (let i = 0; i < balls.length; i++) {
-    if (used.has(balls[i])) continue;
-    let clusterMembers = [balls[i]];
-    used.add(balls[i]);
-
-    for (let j = i + 1; j < balls.length; j++) {
-      if (used.has(balls[j])) continue;
-      let b1 = balls[i];
-      let b2 = balls[j];
-      let dist = Math.hypot(
-        b1.x + b1.size / 2 - (b2.x + b2.size / 2),
-        b1.y + b1.size / 2 - (b2.y + b2.size / 2)
-      );
-      if (dist < 50 && Math.abs(b1.power - b2.power) <= 1) {
-        clusterMembers.push(b2);
-        used.add(b2);
-      }
-    }
-
-    if (clusterMembers.length > 1) {
-      let group = new Group(nextGroupId++, clusterMembers);
-      groups.push(group);
-      for (let m of clusterMembers) {
-        m.group = group;
-      }
-    }
-  }
-}
-
-function groupsEatFood() {
-  for (let g of groups) {
-    if (!g.isMoving) continue;
-
-    if (g.targetFood) {
-      let dist = Math.hypot(g.targetFood.x - g.centerX, g.targetFood.y - g.centerY);
-      if (dist < 40) {
-        let addEnergy = g.targetFood.energy / g.members.length;
-        for (let m of g.members) {
-          m.power += addEnergy;
-          if (m.power > 6) m.power = 6;
-          m.size = 30 + m.power * 10;
-          m.updatePosition();
-        }
-        g.targetFood.remove();
-        foods.splice(foods.indexOf(g.targetFood), 1);
-        g.targetFood = null;
-        g.isMoving = false;
-        g.vx = 0;
-        g.vy = 0;
-      }
-    }
-  }
-}
-
-function groupsHunt() {
-  for (let g of groups) {
-    if (!g.isMoving || !g.prey) continue;
-    let prey = g.prey;
-    if (prey.group === g) {
-      g.prey = null;
-      continue;
-    }
-
-    let dist = Math.hypot(prey.x - g.centerX, prey.y - g.centerY);
-    if (dist < 40) {
-      let damage = 0.15;
-      prey.power -= damage;
-      if (prey.power < 0) prey.power = 0;
-
-      let addEnergy = damage / g.members.length;
-      for (let m of g.members) {
-        m.power += addEnergy;
-        if (m.power > 6) m.power = 6;
-        m.size = 30 + m.power * 10;
-        m.updatePosition();
-      }
-
-      if (prey.power <= 0) {
-        balls.splice(balls.indexOf(prey), 1);
-        prey.div.remove();
-        prey.energyBar.remove();
-        g.prey = null;
-      }
-    }
-  }
-}
-
 function ballsEatFood() {
   for (let b of balls) {
-    if (b.group) continue;
-
     if (b.isMoving && b.targetFood) {
       let dist = Math.hypot(b.targetFood.x - b.x, b.targetFood.y - b.y);
       if (dist < 20) {
@@ -158,8 +57,7 @@ function ballsEatFood() {
 }
 
 function update() {
-  clusterizeBalls();
-  autonomousActions(balls, foods);
+  autonomousActions(balls, foods, width, height);
   ballsEatFood();
 }
 
