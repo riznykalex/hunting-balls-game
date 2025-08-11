@@ -1,6 +1,12 @@
+import { VERSION } from './version.js';
 import { Ball } from './ball.js';
 import { Group } from './group.js';
 import { Food } from './food.js';
+
+
+window.addEventListener('load', () => {
+  console.log(`🎮 Hunting Balls Game — версія ${VERSION}`);
+});
 
 const game = document.getElementById('game');
 const width = window.innerWidth;
