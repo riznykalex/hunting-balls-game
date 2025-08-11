@@ -99,13 +99,7 @@ function autonomousActions() {
 
   for (let b of balls) {
     if (!b.group) {
-      if (b.power < 1) {
-        b.power += 0.005;
-        if (b.power > 2) b.power = 2;
-        b.size = 30 + b.power * 10;
-        b.updatePosition();
-        continue;
-      }
+      // ВИДАЛЕНО: регенерація енергії тут, тепер вона у Ball.update()
 
       let closestFood = null;
       let minFoodDist = Infinity;
@@ -159,7 +153,7 @@ function autonomousActions() {
           b.prey = null;
         }
       }
-      b.update();  // Викликаємо update, а не move, щоб враховувати isMoving
+      b.update();  // Викликаємо update, щоб врахувати рух та енергію
     }
   }
 }

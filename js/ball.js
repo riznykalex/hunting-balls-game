@@ -1,4 +1,3 @@
-// ball.js
 import { moveEntity } from './movement.js';
 
 export class Ball {
@@ -87,7 +86,9 @@ export class Ball {
 
   update() {
     if (this.isMoving) {
-      this.move(this.vx, this.vy);
+      moveEntity(this, this.vx, this.vy, this.width, this.height);
+    } else {
+      moveEntity(this, 0, 0, this.width, this.height);
     }
   }
 }
