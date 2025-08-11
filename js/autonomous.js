@@ -1,9 +1,9 @@
 // autonomous.js
 export function autonomousActions(balls, groups, foods) {
-  // Обробка кульок, які не в групах
+  // Кульки, що не в групі
   for (let b of balls) {
     if (!b.group) {
-      if (b.power < 2) {
+      if (b.power < 1) {
         // Спляча кулька: зупиняємо рух і відновлюємо енергію до 2
         b.isMoving = false;
         b.vx = 0;
@@ -14,12 +14,11 @@ export function autonomousActions(balls, groups, foods) {
         b.size = 30 + b.power * 10;
         b.updatePosition();
 
-        // Не робимо інші дії, поки не відновиться
         continue;
       }
 
-      // Якщо енергія >=2 і кулька не рухається — запускаємо рух
-      if (b.power >= 2 && !b.isMoving) {
+      // Якщо енергія >= 1 і кулька не рухається — запускаємо рух
+      if (b.power >= 1 && !b.isMoving) {
         b.isMoving = true;
         b.vx = (Math.random() - 0.5) * b.speed;
         b.vy = (Math.random() - 0.5) * b.speed;
@@ -28,41 +27,13 @@ export function autonomousActions(balls, groups, foods) {
   }
 
   // Оновлення груп
-  for (let i = groups.length - 1; i >= 0; i--) {
-    let g = groups[i];
-
-    // Якщо група не рухається — розпадаємо її
-    if (!g.isMoving) {
-      for (let m of g.members) {
-        m.group = null;
-        // Відновлення енергії у кожного члена групи (якщо треба)
-        if (m.power < 2) {
-          m.isMoving = false;
-          m.vx = 0;
-          m.vy = 0;
-          m.power += 0.005;
-          if (m.power > 2) m.power = 2;
-          m.size = 30 + m.power * 10;
-          m.updatePosition();
-        } else {
-          // Якщо енергія достатня — запускаємо рух індивідуального бенгла
-          if (!m.isMoving) {
-            m.isMoving = true;
-            m.vx = (Math.random() - 0.5) * m.speed;
-            m.vy = (Math.random() - 0.5) * m.speed;
-          }
-        }
-      }
-      groups.splice(i, 1);
-      continue; // Переходимо до наступної групи
-    }
-
+  for (let g of groups) {
     g.update(balls, foods);
   }
 
-  // Логіка пошуку їжі та полювання для кульок, що не в групах та з достатньою енергією
+  // Індивідуальні кульки, що не в групі, полювання і пошук їжі
   for (let b of balls) {
-    if (!b.group && b.power >= 2) {
+    if (!b.group && b.power >= 1) {
       let closestFood = null;
       let minFoodDist = Infinity;
       for (let food of foods) {
