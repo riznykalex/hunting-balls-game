@@ -1,3 +1,4 @@
+// ball.js
 import { moveEntity } from './movement.js';
 
 export class Ball {
@@ -85,19 +86,32 @@ export class Ball {
   }
 
   update() {
-    if (this.isMoving) {
+    if (this.power < 1) {
+      // Кулька спить — не рухається і відновлює енергію
+      this.isMoving = false;
+      this.vx = 0;
+      this.vy = 0;
+
+      this.power += 0.005;
+      if (this.power > 2) this.power = 2;
+
+      this.size = 30 + this.power * 10;
+      this.updatePosition();
+
+    } else if (this.isMoving) {
+      // Кулька рухається — втрачає енергію
       this.move(this.vx, this.vy);
 
-      // Втрачаємо енергію пропорційно руху
       let distMoved = Math.hypot(this.vx, this.vy);
-      this.power -= distMoved * 0.007;
+      this.power -= distMoved * 0.003; // можна налаштувати коефіцієнт
+
       if (this.power < 0) this.power = 0;
 
       this.size = 30 + this.power * 10;
       this.updatePosition();
 
     } else {
-      // Повільна регенерація енергії коли стоїмо
+      // Кулька не рухається — повільно відновлює енергію
       this.power += 0.001;
       if (this.power > 6) this.power = 6;
 
