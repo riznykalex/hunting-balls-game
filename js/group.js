@@ -33,7 +33,7 @@ export class Group {
   }
 
   autonomousHunt(balls, foods) {
-    if (this.averagePower() < 1) { // відпочиваємо, якщо сила дуже мала
+    if (this.averagePower() < 1) {
       this.isMoving = false;
       this.vx = 0;
       this.vy = 0;
@@ -73,12 +73,12 @@ export class Group {
       this.targetFood = null;
     }
 
-    // Шукаємо жертву (окрему кульку, не в групі)
+    // Шукаємо жертву (індивідуальну кульку, не в групі)
     let preyCandidate = null;
     let minDist = Infinity;
     for (let b of balls) {
-      if (this.members.includes(b)) continue; // не полюємо на себе
-      if (b.group) continue; // пропускаємо кульки в інших групах
+      if (this.members.includes(b)) continue;
+      if (b.group) continue;
       if (b.power < this.averagePower()) {
         let dist = Math.hypot(b.x - this.centerX, b.y - this.centerY);
         if (dist < minDist && dist < 400) {
@@ -117,28 +117,26 @@ export class Group {
     if (!this.isMoving) return;
     this.updateCenter();
 
-    // Функція для плавного наближення (lerp)
+    // плавне наближення (lerp)
     const lerp = (start, end, t) => start + (end - start) * t;
 
     for (let i = 0; i < this.members.length; i++) {
       let m = this.members[i];
 
-      // Визначаємо цільову позицію кульки по колу навколо центру групи
       let angle = (2 * Math.PI / this.members.length) * i;
       let offsetRadius = 20;
       let targetX = this.centerX + offsetRadius * Math.cos(angle) - m.size / 2;
       let targetY = this.centerY + offsetRadius * Math.sin(angle) - m.size / 2;
 
-      // Рухаємо кульку в напрямку руху групи через moveEntity (врахуємо витрату/регена енергії)
+      // рух групи
       moveEntity(m, this.vx, this.vy, m.width, m.height);
 
-      // Плавно наближаємо кульку до цільової позиції
+      // плавно наближаємо кульку до цільової позиції
       m.x = lerp(m.x, targetX, 0.1);
       m.y = lerp(m.y, targetY, 0.1);
 
-      // Оновлюємо розмір та позицію після зміни координат
-      m.size = 30 + m.power * 10;
-      m.updatePosition();
+      // Тепер кулька сама опрацьовує рух і енергію
+      m.update();
     }
 
     this.updateCenter();

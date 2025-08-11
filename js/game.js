@@ -3,7 +3,6 @@ import { Ball } from './ball.js';
 import { Group } from './group.js';
 import { Food } from './food.js';
 
-
 window.addEventListener('load', () => {
   console.log(`🎮 Hunting Balls Game — версія ${VERSION}`);
 });
@@ -99,7 +98,14 @@ function autonomousActions() {
 
   for (let b of balls) {
     if (!b.group) {
-      // ВИДАЛЕНО: регенерація енергії тут, тепер вона у Ball.update()
+      if (b.power < 1) {
+        // Лікування коли кулька сама (енергію нарощує у update)
+        b.isMoving = false;
+        b.vx = 0;
+        b.vy = 0;
+        b.update();
+        continue;
+      }
 
       let closestFood = null;
       let minFoodDist = Infinity;
@@ -153,7 +159,7 @@ function autonomousActions() {
           b.prey = null;
         }
       }
-      b.update();  // Викликаємо update, щоб врахувати рух та енергію
+      b.update();  // Завжди оновлюємо кульку, щоб обробити рух і енергію
     }
   }
 }
