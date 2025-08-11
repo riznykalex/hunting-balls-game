@@ -1,149 +1,101 @@
 import { moveEntity } from './movement.js';
 
-export class Group {
-  constructor(id, members) {
+export class Ball {
+  constructor(id, x, y, power, gameContainer, width, height) {
     this.id = id;
-    this.members = members; // масив Ball
+    this.x = x;
+    this.y = y;
+    this.power = power; // 1..6
+    this.size = 30 + this.power * 10;
+    this.speed = 1.5;
+    this.isMoving = false;
     this.vx = 0;
     this.vy = 0;
-    this.speed = 1.2;
-    this.isMoving = false;
     this.prey = null;
     this.targetFood = null;
-    this.updateCenter();
+    this.group = null;
+
+    this.width = width;
+    this.height = height;
+    this.gameContainer = gameContainer;
+
+    this.div = document.createElement('div');
+    this.div.classList.add('ball');
+
+    this.energyText = document.createElement('span');
+    this.energyText.style.userSelect = 'none';
+    this.energyText.style.pointerEvents = 'none';
+    this.energyText.style.fontSize = '12px';
+    this.energyText.style.fontWeight = 'bold';
+    this.energyText.style.color = 'white';
+    this.energyText.style.position = 'absolute';
+    this.energyText.style.top = '50%';
+    this.energyText.style.left = '50%';
+    this.energyText.style.transform = 'translate(-50%, -50%)';
+    this.energyText.style.whiteSpace = 'nowrap';
+
+    this.div.appendChild(this.energyText);
+    this.gameContainer.appendChild(this.div);
+
+    this.energyBar = document.createElement('div');
+    this.energyBar.classList.add('energy-bar');
+    this.gameContainer.appendChild(this.energyBar);
+
+    this.energyFill = document.createElement('div');
+    this.energyFill.classList.add('energy-fill');
+    this.energyBar.appendChild(this.energyFill);
+
+    this.updatePosition();
+    this.updateEnergyBar();
   }
 
-  updateCenter() {
-    if (this.members.length === 0) return;
-    let sumX = 0, sumY = 0;
-    for (let m of this.members) {
-      sumX += m.x + m.size / 2;
-      sumY += m.y + m.size / 2;
-    }
-    this.centerX = sumX / this.members.length;
-    this.centerY = sumY / this.members.length;
-  }
+  updateEnergyBar() {
+    let maxPower = 6;
+    let pct = Math.min(this.power / maxPower, 1);
+    this.energyFill.style.width = (pct * 100) + '%';
 
-  totalPower() {
-    return this.members.reduce((sum, m) => sum + m.power, 0);
-  }
-
-  averagePower() {
-    return this.totalPower() / this.members.length;
-  }
-
-  autonomousHunt(balls, foods) {
-    if (this.averagePower() < 1) {
-      this.isMoving = false;
-      this.vx = 0;
-      this.vy = 0;
-      this.prey = null;
-      this.targetFood = null;
-      return;
-    }
-
-    // Шукаємо найближчу їжу
-    let closestFood = null;
-    let minFoodDist = Infinity;
-    for (let food of foods) {
-      let dist = Math.hypot(food.x - this.centerX, food.y - this.centerY);
-      if (dist < 200 && dist < minFoodDist) {
-        minFoodDist = dist;
-        closestFood = food;
-      }
-    }
-
-    if (closestFood) {
-      this.prey = null;
-      this.targetFood = closestFood;
-      this.isMoving = true;
-
-      let dx = closestFood.x - this.centerX;
-      let dy = closestFood.y - this.centerY;
-      let dist = Math.hypot(dx, dy);
-      if (dist > 1) {
-        this.vx = (dx / dist) * this.speed;
-        this.vy = (dy / dist) * this.speed;
-      } else {
-        this.vx = 0;
-        this.vy = 0;
-      }
-      return;
+    if (this.power <= 1) {
+      this.energyFill.style.backgroundColor = '#ff3333';
+    } else if (this.power <= 3) {
+      this.energyFill.style.backgroundColor = '#ffcc33';
+    } else if (this.power <= 5) {
+      this.energyFill.style.backgroundColor = '#33cc33';
     } else {
-      this.targetFood = null;
+      this.energyFill.style.backgroundColor = '#3399ff';
     }
 
-    // Шукаємо жертву (індивідуальну кульку, не в групі)
-    let preyCandidate = null;
-    let minDist = Infinity;
-    for (let b of balls) {
-      if (this.members.includes(b)) continue;
-      if (b.group) continue;
-      if (b.power < this.averagePower()) {
-        let dist = Math.hypot(b.x - this.centerX, b.y - this.centerY);
-        if (dist < minDist && dist < 400) {
-          minDist = dist;
-          preyCandidate = b;
-        }
-      }
-    }
+    this.energyText.textContent = this.power.toFixed(2);
+  }
 
-    if (preyCandidate) {
-      this.prey = preyCandidate;
+  updatePosition() {
+    this.div.style.width = this.size + 'px';
+    this.div.style.height = this.size + 'px';
+    this.div.style.left = this.x + 'px';
+    this.div.style.top = this.y + 'px';
 
-      let dx = preyCandidate.x - this.centerX;
-      let dy = preyCandidate.y - this.centerY;
-      let dist = Math.hypot(dx, dy);
+    this.energyBar.style.width = this.size + 'px';
+    this.energyBar.style.left = this.x + 'px';
+    this.energyBar.style.top = (this.y + this.size + 2) + 'px';
 
-      let energyNeeded = dist * 0.005;
-      if (this.totalPower() >= energyNeeded) {
-        this.vx = (dx / dist) * this.speed;
-        this.vy = (dy / dist) * this.speed;
-        this.isMoving = true;
-      } else {
-        this.isMoving = false;
-        this.vx = 0;
-        this.vy = 0;
-      }
+    this.updateEnergyBar();
+  }
+
+  move(dx, dy) {
+    moveEntity(this, dx, dy, this.width, this.height);
+  }
+
+  update() {
+    if (this.isMoving) {
+      this.move(this.vx, this.vy);
+      let distMoved = Math.hypot(this.vx, this.vy);
+      this.power -= distMoved * 0.007;
+      if (this.power < 0) this.power = 0;
     } else {
-      this.isMoving = false;
-      this.vx = 0;
-      this.vy = 0;
-      this.prey = null;
-    }
-  }
-
-  move() {
-    if (!this.isMoving) return;
-    this.updateCenter();
-
-    // плавне наближення (lerp)
-    const lerp = (start, end, t) => start + (end - start) * t;
-
-    for (let i = 0; i < this.members.length; i++) {
-      let m = this.members[i];
-
-      let angle = (2 * Math.PI / this.members.length) * i;
-      let offsetRadius = 20;
-      let targetX = this.centerX + offsetRadius * Math.cos(angle) - m.size / 2;
-      let targetY = this.centerY + offsetRadius * Math.sin(angle) - m.size / 2;
-
-      // рух групи
-      moveEntity(m, this.vx, this.vy, m.width, m.height);
-
-      // плавно наближаємо кульку до цільової позиції
-      m.x = lerp(m.x, targetX, 0.1);
-      m.y = lerp(m.y, targetY, 0.1);
-
-      // Тепер кулька сама опрацьовує рух і енергію
-      m.update();
+      this.power += 0.001;
+      if (this.power > 6) this.power = 6;
     }
 
-    this.updateCenter();
-  }
-
-  update(balls, foods) {
-    this.autonomousHunt(balls, foods);
-    this.move();
+    this.size = 30 + this.power * 10;
+    this.updatePosition();
   }
 }
