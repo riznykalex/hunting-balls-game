@@ -87,15 +87,22 @@ export class Ball {
   update() {
     if (this.isMoving) {
       this.move(this.vx, this.vy);
+
+      // Втрачаємо енергію пропорційно руху
       let distMoved = Math.hypot(this.vx, this.vy);
       this.power -= distMoved * 0.007;
       if (this.power < 0) this.power = 0;
+
+      this.size = 30 + this.power * 10;
+      this.updatePosition();
+
     } else {
+      // Повільна регенерація енергії коли стоїмо
       this.power += 0.001;
       if (this.power > 6) this.power = 6;
-    }
 
-    this.size = 30 + this.power * 10;
-    this.updatePosition();
+      this.size = 30 + this.power * 10;
+      this.updatePosition();
+    }
   }
 }

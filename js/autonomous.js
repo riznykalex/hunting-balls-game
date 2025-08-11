@@ -1,48 +1,46 @@
 export function autonomousActions(balls, groups, foods) {
+  // Індивідуальні кульки
   for (let b of balls) {
     if (!b.group) {
-      if (b.power < 1) {
-        // Кулька спить і відновлюється до 2
+      if (b.power >= 2) {
+        if (!b.isMoving) {
+          b.isMoving = true;
+          b.vx = (Math.random() - 0.5) * b.speed;
+          b.vy = (Math.random() - 0.5) * b.speed;
+        }
+      } else if (b.power < 1) {
+        // Спить, поки не відновиться до 2
         b.isMoving = false;
         b.vx = 0;
         b.vy = 0;
-        b.power += 0.005;
-        if (b.power > 2) b.power = 2;
-        b.size = 30 + b.power * 10;
-        b.updatePosition();
-        continue;
-      }
-
-      // Кулька пробуджується і починає рух при power >= 1.9
-      if (b.power >= 1.9 && !b.isMoving) {
-        b.isMoving = true;
-        b.vx = (Math.random() - 0.5) * b.speed;
-        b.vy = (Math.random() - 0.5) * b.speed;
       }
     }
   }
 
+  // Групи кульок
   for (let g of groups) {
+    // Рухаємось та шукаємо їжу/жертву
     g.update(balls, foods);
+
+    // Якщо група не рухається — розділяємось
+    if (!g.isMoving) {
+      for (let m of g.members) {
+        m.group = null;
+      }
+      groups.splice(groups.indexOf(g), 1);
+    }
   }
 
+  // Індивідуальна поведінка кульок що не в групах
   for (let b of balls) {
     if (!b.group) {
-      if (b.isMoving) {
-        // Кулька рухається і втрачає енергію
-        b.update();
-      } else {
-        // Кулька не рухається, відновлюється, якщо енергія < 2
-        if (b.power < 2) {
-          b.power += 0.005;
-          if (b.power > 2) b.power = 2;
-          b.size = 30 + b.power * 10;
-          b.updatePosition();
-        }
+      if (b.power < 1) {
+        b.power += 0.005; // регенерація енергії під час сну
+        if (b.power > 2) b.power = 2; // відновлюємось до 2 і прокидаємось
       }
 
-      if (b.isMoving) {
-        // Пошук їжі
+      if (b.power >= 2) {
+        // Якщо є їжа поблизу — рухаємось до неї
         let closestFood = null;
         let minFoodDist = Infinity;
         for (let food of foods) {
@@ -56,14 +54,15 @@ export function autonomousActions(balls, groups, foods) {
         if (closestFood) {
           b.prey = null;
           b.targetFood = closestFood;
+          b.isMoving = true;
           let dx = closestFood.x - b.x;
           let dy = closestFood.y - b.y;
           let dist = Math.hypot(dx, dy);
           b.vx = (dx / dist) * b.speed;
           b.vy = (dy / dist) * b.speed;
         } else {
-          // Пошук жертви
           b.targetFood = null;
+          // Якщо немає їжі — шукаємо жертву слабшу кульку
           let preyCandidate = null;
           let minDist = Infinity;
           for (let other of balls) {
@@ -87,14 +86,16 @@ export function autonomousActions(balls, groups, foods) {
             let dist = Math.hypot(dx, dy);
             b.vx = (dx / dist) * b.speed;
             b.vy = (dy / dist) * b.speed;
+            b.isMoving = true;
           } else {
-            b.prey = null;
             b.isMoving = false;
             b.vx = 0;
             b.vy = 0;
+            b.prey = null;
           }
         }
       }
+      b.update();
     }
   }
 }

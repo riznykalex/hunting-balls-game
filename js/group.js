@@ -3,19 +3,28 @@ import { moveEntity } from './movement.js';
 export class Group {
   constructor(id, members) {
     this.id = id;
-    this.members = members; // масив Ball
+    this.members = members; // Масив кульок
+    this.isMoving = false;
     this.vx = 0;
     this.vy = 0;
-    this.speed = 1.2;
-    this.isMoving = false;
     this.prey = null;
     this.targetFood = null;
+    this.speed = 1.5;
+
+    this.centerX = 0;
+    this.centerY = 0;
+
     this.updateCenter();
   }
 
   updateCenter() {
-    if (this.members.length === 0) return;
-    let sumX = 0, sumY = 0;
+    if (this.members.length === 0) {
+      this.centerX = 0;
+      this.centerY = 0;
+      return;
+    }
+    let sumX = 0;
+    let sumY = 0;
     for (let m of this.members) {
       sumX += m.x + m.size / 2;
       sumY += m.y + m.size / 2;
@@ -29,6 +38,7 @@ export class Group {
   }
 
   averagePower() {
+    if (this.members.length === 0) return 0;
     return this.totalPower() / this.members.length;
   }
 
@@ -61,19 +71,21 @@ export class Group {
       let dx = closestFood.x - this.centerX;
       let dy = closestFood.y - this.centerY;
       let dist = Math.hypot(dx, dy);
+
       if (dist > 1) {
         this.vx = (dx / dist) * this.speed;
         this.vy = (dy / dist) * this.speed;
       } else {
         this.vx = 0;
         this.vy = 0;
+        this.isMoving = false;
       }
       return;
     } else {
       this.targetFood = null;
     }
 
-    // Шукаємо жертву (індивідуальну кульку, не в групі)
+    // Шукаємо жертву
     let preyCandidate = null;
     let minDist = Infinity;
     for (let b of balls) {
@@ -95,6 +107,7 @@ export class Group {
       let dy = preyCandidate.y - this.centerY;
       let dist = Math.hypot(dx, dy);
 
+      // Витрати енергії на рух (приблизно)
       let energyNeeded = dist * 0.005;
       if (this.totalPower() >= energyNeeded) {
         this.vx = (dx / dist) * this.speed;
@@ -115,35 +128,42 @@ export class Group {
 
   move() {
     if (!this.isMoving) return;
+
     this.updateCenter();
 
-    // плавне наближення (lerp)
-    const lerp = (start, end, t) => start + (end - start) * t;
-
-    for (let i = 0; i < this.members.length; i++) {
-      let m = this.members[i];
-
-      let angle = (2 * Math.PI / this.members.length) * i;
-      let offsetRadius = 20;
-      let targetX = this.centerX + offsetRadius * Math.cos(angle) - m.size / 2;
-      let targetY = this.centerY + offsetRadius * Math.sin(angle) - m.size / 2;
-
-      // рух групи
-      moveEntity(m, this.vx, this.vy, m.width, m.height);
-
-      // плавно наближаємо кульку до цільової позиції
-      m.x = lerp(m.x, targetX, 0.1);
-      m.y = lerp(m.y, targetY, 0.1);
-
-      // Тепер кулька сама опрацьовує рух і енергію
-      m.update();
+    // Якщо швидкість дуже мала — зупиняємо рух
+    if (Math.abs(this.vx) < 0.01 && Math.abs(this.vy) < 0.01) {
+      this.isMoving = false;
+      this.vx = 0;
+      this.vy = 0;
+      return;
     }
 
-    this.updateCenter();
+    // Переміщаємо кожного члена групи на vx, vy з врахуванням меж екрану
+    for (let m of this.members) {
+      moveEntity(m, this.vx, this.vy, m.width, m.height);
+
+      // Витрачаємо енергію пропорційно руху
+      let distMoved = Math.hypot(this.vx, this.vy);
+      m.power -= distMoved * 0.007;
+      if (m.power < 0) m.power = 0;
+
+      // Розмір залежить від енергії
+      m.size = 30 + m.power * 10;
+      m.updatePosition();
+
+      // Відновлення енергії якщо кулька спокійна і не рухається
+      if (!this.isMoving && m.power < 6) {
+        m.power += 0.002; // трохи повільніше ніж в індивідуальних
+        if (m.power > 6) m.power = 6;
+      }
+    }
   }
 
   update(balls, foods) {
     this.autonomousHunt(balls, foods);
-    this.move();
+    if (this.isMoving) {
+      this.move();
+    }
   }
 }
