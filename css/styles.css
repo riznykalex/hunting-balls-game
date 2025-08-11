@@ -14,8 +14,9 @@ body, html {
 .ball {
   position: absolute;
   border-radius: 50%;
-  background-color: #555;
-  border: 1px solid #333;
+  background-color: #3399ff;
+  border: 2px solid #003366;
+  box-shadow: 0 0 8px rgba(51, 153, 255, 0.7);
   text-align: center;
   line-height: 1;
   color: white;
@@ -23,11 +24,14 @@ body, html {
   user-select: none;
   cursor: pointer;
   box-sizing: border-box;
+  min-width: 30px;
+  min-height: 30px;
+  transition: width 0.2s, height 0.2s, left 0.2s, top 0.2s;
 }
 
 .ball.selected {
   border-color: yellow;
-  box-shadow: 0 0 10px yellow;
+  box-shadow: 0 0 12px yellow;
 }
 
 .energy-bar {
@@ -37,6 +41,7 @@ body, html {
   border-radius: 3px;
   overflow: hidden;
   user-select: none;
+  z-index: 1000;
 }
 
 .energy-fill {
@@ -52,4 +57,7 @@ body, html {
   border: 1px solid #bb6600;
   box-sizing: border-box;
   cursor: default;
+  background-color: #ffcc00;
+  width: 12px;
+  height: 12px;
 }
