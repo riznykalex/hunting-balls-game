@@ -1,4 +1,4 @@
 // version.js
 // Пам'ятка: оновлюй версію при кожному значному зміненні коду!
 
-export const VERSION = '1.0.20';
+export const VERSION = '1.0.21';
