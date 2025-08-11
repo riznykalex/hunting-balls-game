@@ -15,6 +15,8 @@ export class Ball {
     this.prey = null;
     this.targetFood = null;
     this.group = null;
+	
+    this.isSleeping = false;
 
     this.width = width;
     this.height = height;
