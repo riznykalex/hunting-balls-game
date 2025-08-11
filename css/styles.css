@@ -14,8 +14,8 @@ body, html {
 .ball {
   position: absolute;
   border-radius: 50%;
-  background-color: #3399ff;
-  border: 2px solid #003366;
+  background-color: #f90 !important;
+  border: 2px solid #fff !important;
   box-shadow: 0 0 8px rgba(51, 153, 255, 0.7);
   text-align: center;
   line-height: 1;
