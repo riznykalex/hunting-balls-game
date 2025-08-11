@@ -159,9 +159,7 @@ function ballsEatFood() {
 
 function update() {
   clusterizeBalls();
-  autonomousActions(balls, groups, foods);
-  groupsEatFood();
-  groupsHunt();
+  autonomousActions(balls, foods);
   ballsEatFood();
 }
 
