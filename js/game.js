@@ -114,7 +114,7 @@ for (let i = 0; i < 15; i++) {
   createBallRandom();
 }
 
-for (let i = 0; i < 30; i++) {
+for (let i = 0; i < 50; i++) {
   createFoodRandom();
 }
 
@@ -125,7 +125,7 @@ setInterval(() => {
 }, 4000);
 
 setInterval(() => {
-  if (foods.length < 40) {
+  if (foods.length < 60) {
     createFoodRandom();
   }
 }, 3000);
