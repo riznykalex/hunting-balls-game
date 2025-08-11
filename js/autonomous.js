@@ -89,7 +89,7 @@ export function autonomousActions(balls, foods) {
 
       // Втрачаємо енергію пропорційно руху
       let distMoved = Math.hypot(b.vx, b.vy);
-      b.power -= distMoved * 0.004;
+      b.power -= distMoved * 0.002;
       if (b.power < 0) b.power = 0;
     }
 
