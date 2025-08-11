@@ -1,3 +1,4 @@
+// ball.js
 import { moveEntity } from './movement.js';
 
 export class Ball {
@@ -21,6 +22,20 @@ export class Ball {
 
     this.div = document.createElement('div');
     this.div.classList.add('ball');
+
+    this.energyText = document.createElement('span');
+    this.energyText.style.userSelect = 'none';
+    this.energyText.style.pointerEvents = 'none';
+    this.energyText.style.fontSize = '12px';
+    this.energyText.style.fontWeight = 'bold';
+    this.energyText.style.color = 'white';
+    this.energyText.style.position = 'absolute';
+    this.energyText.style.top = '50%';
+    this.energyText.style.left = '50%';
+    this.energyText.style.transform = 'translate(-50%, -50%)';
+    this.energyText.style.whiteSpace = 'nowrap';
+
+    this.div.appendChild(this.energyText);
     this.gameContainer.appendChild(this.div);
 
     this.energyBar = document.createElement('div');
@@ -49,6 +64,8 @@ export class Ball {
     } else {
       this.energyFill.style.backgroundColor = '#3399ff';
     }
+
+    this.energyText.textContent = this.power.toFixed(2);
   }
 
   updatePosition() {
