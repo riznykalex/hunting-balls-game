@@ -1,32 +1,38 @@
+// autonomous.js
 export function autonomousActions(balls, groups, foods) {
+  // ќбробка кульок, €к≥ не в групах
   for (let b of balls) {
     if (!b.group) {
       if (b.power < 2) {
-        //  улька спить ≥ в≥дновлюЇ енерг≥ю до 2
+        // —пл€ча кулька: зупин€Їмо рух ≥ в≥дновлюЇмо енерг≥ю до 2
         b.isMoving = false;
         b.vx = 0;
         b.vy = 0;
         b.power += 0.005;
         if (b.power > 2) b.power = 2;
+
         b.size = 30 + b.power * 10;
         b.updatePosition();
+
+        // ѕерейти до наступноњ кульки Ч не робимо ≥нших д≥й поки не в≥дновитьс€
         continue;
       }
 
-      if (b.power >= 2) {
-        if (!b.isMoving) {
-          b.isMoving = true;
-          b.vx = (Math.random() - 0.5) * b.speed;
-          b.vy = (Math.random() - 0.5) * b.speed;
-        }
+      // якщо енерг≥€ 2 або б≥льше ≥ кулька не рухаЇтьс€ Ч запускаЇмо рух
+      if (b.power >= 2 && !b.isMoving) {
+        b.isMoving = true;
+        b.vx = (Math.random() - 0.5) * b.speed;
+        b.vy = (Math.random() - 0.5) * b.speed;
       }
     }
   }
 
+  // ќновленн€ груп
   for (let g of groups) {
     g.update(balls, foods);
   }
 
+  // Ћог≥ка пошуку њж≥ та полюванн€ дл€ кульок, що не в групах та з достатньою енерг≥Їю
   for (let b of balls) {
     if (!b.group && b.power >= 2) {
       let closestFood = null;
