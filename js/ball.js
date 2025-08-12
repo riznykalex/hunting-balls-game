@@ -1,3 +1,4 @@
+//ball.js
 export class Ball {
   constructor(id, x, y, power, game, width, height) {
     this.id = id;

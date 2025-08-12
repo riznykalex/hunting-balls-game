@@ -7,13 +7,14 @@ body, html {
   position: relative;
   width: 100vw;
   height: 100vh;
-  background: #222;
+  background: #eee;
   overflow: hidden;
 }
 
 .ball {
   position: absolute;
   border-radius: 50%;
+  background: red; /* чи будь-який колір */
   background-color: #f90 !important;
   border: 2px solid #fff !important;
   box-shadow: 0 0 8px rgba(51, 153, 255, 0.7);

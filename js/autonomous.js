@@ -1,3 +1,4 @@
+//autonomous.js
 export function autonomousActions(balls, foods) {
   for (let b of balls) {
     if (b.isControlled) continue;
