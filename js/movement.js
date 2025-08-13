@@ -1,31 +1,45 @@
 // movement.js
-export function moveEntity(entity, dx, dy, boundsWidth, boundsHeight, options = {}) {
-  const { energyLossRate = 0.007, energyRegenRate = 0.001, maxEnergy = 6 } = options;
+// Відповідальний за переміщення в межах кордонів і повернення фактично пройденої відстані.
 
-  if (dx !== 0 || dy !== 0) {
-    // Рух
-    entity.x += dx;
-    entity.y += dy;
+export function moveEntity(entity, dt) {
+  // entity: має vx, vy (пікселі / сек), x, y, size, width, height
+  // dt: seconds
+  const dx = entity.vx * dt;
+  const dy = entity.vy * dt;
 
-    // Обмеження по екрану
-    entity.x = Math.min(Math.max(0, entity.x), boundsWidth - entity.size);
-    entity.y = Math.min(Math.max(0, entity.y), boundsHeight - entity.size);
+  let nextX = entity.x + dx;
+  let nextY = entity.y + dy;
 
-    // Витрата енергії при русі
-    let distMoved = Math.hypot(dx, dy);
-    entity.power -= distMoved * energyLossRate;
-    if (entity.power < 0) entity.power = 0;
-  } else {
-    // Регенерація енергії, якщо стоїмо
-    entity.power += energyRegenRate;
-    if (entity.power > maxEnergy) entity.power = maxEnergy;
-  }
+  // обмеження по межах (розміщуємо так, щоб елемент був повністю в полі)
+  const minX = 0;
+  const minY = 0;
+  const maxX = Math.max(0, entity.boundsWidth - entity.size);
+  const maxY = Math.max(0, entity.boundsHeight - entity.size);
 
-  // Оновлення розміру залежно від енергії
-  entity.size = 30 + entity.power * 10;
+  // підрізаємо координати
+  if (nextX < minX) nextX = minX;
+  if (nextX > maxX) nextX = maxX;
+  if (nextY < minY) nextY = minY;
+  if (nextY > maxY) nextY = maxY;
 
-  // Оновлення позиції на екрані, якщо є метод
-  if (entity.updatePosition) {
-    entity.updatePosition();
-  }
+  const actualDx = nextX - entity.x;
+  const actualDy = nextY - entity.y;
+  const dist = Math.hypot(actualDx, actualDy);
+
+  entity.x = nextX;
+  entity.y = nextY;
+
+  // оновлює візуально (якщо є метод)
+  if (entity.updatePosition) entity.updatePosition();
+
+  return dist;
+}
+
+// невелика допоміжна функція для нормалізації вектора і множення на швидкість
+export function vectorToVelocity(srcX, srcY, dstX, dstY, speed) {
+  const dx = dstX - srcX;
+  const dy = dstY - srcY;
+  const dist = Math.hypot(dx, dy);
+  if (dist < 1e-6) return { vx: 0, vy: 0, dist: 0 };
+  return { vx: (dx / dist) * speed, vy: (dy / dist) * speed, dist };
 }
