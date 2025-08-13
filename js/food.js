@@ -1,21 +1,15 @@
-// food.js
-export class Food {
-  constructor(id, x, y, energy, container) {
-    this.id = id;
-    this.x = x;
-    this.y = y;
-    this.energy = energy; // скільки додає
-    this.size = 12;
-    this.container = container;
+export default class Food {
+    constructor(x, y, size = 5, color = 'green') {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.color = color;
+    }
 
-    this.div = document.createElement('div');
-    this.div.classList.add('food');
-    this.div.style.left = `${this.x}px`;
-    this.div.style.top  = `${this.y}px`;
-    this.container.appendChild(this.div);
-  }
-
-  remove() {
-    this.div.remove();
-  }
+    render(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+    }
 }
